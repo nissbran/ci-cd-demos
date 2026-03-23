@@ -1,0 +1,95 @@
+{
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "contentVersion": "1.0.0.0",
+    "triggers": {
+      "When_messages_are_available_in_topic": {
+        "type": "ServiceProvider",
+        "inputs": {
+          "parameters": {
+            "topicName": "orders-enriched",
+            "subscriptionName": "la-enriched",
+            "isSessionsEnabled": false
+          },
+          "serviceProviderConfiguration": {
+            "connectionName": "serviceBus",
+            "operationId": "receiveTopicMessages",
+            "serviceProviderId": "/serviceProviders/serviceBus"
+          }
+        }
+      }
+    },
+    "actions": {
+      "Parse_enriched_message": {
+        "runAfter": {},
+        "type": "ParseJson",
+        "inputs": {
+          "content": "@base64ToString(triggerBody()?['contentData'])",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "orderId": { "type": "string" },
+              "createdAt": { "type": "string" },
+              "customer": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "email": { "type": "string" }
+                }
+              },
+              "lineItem": {
+                "type": "object",
+                "properties": {
+                  "productCode": { "type": "string" },
+                  "quantity": { "type": "integer" },
+                  "unitPrice": { "type": "number" },
+                  "totalPrice": { "type": "number" }
+                }
+              },
+              "status": { "type": "string" },
+              "processingNotes": { "type": "string" },
+              "processedAt": { "type": "string" }
+            },
+            "required": [ "orderId", "customer", "lineItem", "status" ]
+          }
+        }
+      },
+      "Transform_to_external_format": {
+        "runAfter": {
+          "Parse_enriched_message": [ "Succeeded" ]
+        },
+        "type": "Liquid",
+        "kind": "JsonToJson",
+        "inputs": {
+          "body": "@body('Parse_enriched_message')",
+          "map": {
+            "source": "LogicApp",
+            "name": "InternalToExternal"
+          }
+        }
+      },
+      "Send_to_orders-outbound": {
+        "runAfter": {
+          "Transform_to_external_format": [ "Succeeded" ]
+        },
+        "type": "ServiceProvider",
+        "inputs": {
+          "parameters": {
+            "entityName": "orders-outbound",
+            "message": {
+              "contentData": "@{body('Transform_to_external_format')}",
+              "contentType": "application/json"
+            }
+          },
+          "serviceProviderConfiguration": {
+            "connectionName": "serviceBus",
+            "operationId": "sendMessage",
+            "serviceProviderId": "/serviceProviders/serviceBus"
+          }
+        }
+      }
+    },
+    "outputs": {}
+  },
+  "kind": "Stateful"
+}

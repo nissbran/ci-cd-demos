@@ -1,0 +1,17 @@
+{
+    "servers": {
+        "mslearn": {
+            "url": "https://learn.microsoft.com/api/mcp",
+            "type": "http"
+        },
+        "bicep-stdio": {
+            "type": "stdio",
+            "command": "dnx",
+            "args": [
+                "-y",
+                "Azure.Bicep.McpServer"
+            ]
+        }
+    },
+    "inputs": []
+}

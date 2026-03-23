@@ -1,0 +1,29 @@
+{%- comment -%}
+  ExternalToInternal.liquid
+  Transforms an inbound external Order message to the internal order format.
+
+  Input (external):
+    { "CustomerName", "CustomerEmail", "ProductCode", "Quantity", "UnitPrice", "OrderDate" }
+
+  Output (internal):
+    { "orderId", "createdAt", "customer": {name, email},
+      "lineItem": {productCode, quantity, unitPrice, totalPrice}, "status" }
+{%- endcomment -%}
+{%- assign totalPrice = content.Quantity | times: content.UnitPrice -%}
+{%- assign cleanCode = content.ProductCode | upcase | replace: ' ', '-' -%}
+{%- assign cleanDate = content.OrderDate | remove: '-' -%}
+{
+  "orderId": "ORD-{{ cleanCode }}-{{ cleanDate }}",
+  "createdAt": "{{ content.OrderDate }}T00:00:00Z",
+  "customer": {
+    "name": "{{ content.CustomerName }}",
+    "email": "{{ content.CustomerEmail }}"
+  },
+  "lineItem": {
+    "productCode": "{{ content.ProductCode }}",
+    "quantity": {{ content.Quantity }},
+    "unitPrice": {{ content.UnitPrice }},
+    "totalPrice": {{ totalPrice }}
+  },
+  "status": "received"
+}

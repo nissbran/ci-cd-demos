@@ -1,0 +1,23 @@
+{%- comment -%}
+  InternalToExternal.liquid
+  Transforms an enriched internal order message to the external downstream format.
+
+  Input (internal/enriched):
+    { "orderId", "createdAt", "customer": {name, email},
+      "lineItem": {productCode, quantity, unitPrice, totalPrice},
+      "status", "processingNotes", "processedAt" }
+
+  Output (external downstream):
+    { "OrderReference", "CustomerFullName", "ProductSKU", "TotalAmount",
+      "ProcessingStatus", "Notes", "FulfilmentDate" }
+{%- endcomment -%}
+{%- assign fulfilDate = content.processedAt | slice: 0, 10 -%}
+{
+  "OrderReference": "{{ content.orderId }}",
+  "CustomerFullName": "{{ content.customer.name }}",
+  "ProductSKU": "{{ content.lineItem.productCode }}",
+  "TotalAmount": {{ content.lineItem.totalPrice }},
+  "ProcessingStatus": "{{ content.status }}",
+  "Notes": "{{ content.processingNotes }}",
+  "FulfilmentDate": "{{ fulfilDate }}"
+}

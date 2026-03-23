@@ -1,0 +1,80 @@
+{
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "contentVersion": "1.0.0.0",
+    "triggers": {
+      "When_messages_are_available_in_topic": {
+        "type": "ServiceProvider",
+        "inputs": {
+          "parameters": {
+            "topicName": "orders-inbound",
+            "subscriptionName": "la-inbound",
+            "isSessionsEnabled": false
+          },
+          "serviceProviderConfiguration": {
+            "connectionName": "serviceBus",
+            "operationId": "receiveTopicMessages",
+            "serviceProviderId": "/serviceProviders/serviceBus"
+          }
+        }
+      }
+    },
+    "actions": {
+      "Parse_inbound_message": {
+        "runAfter": {},
+        "type": "ParseJson",
+        "inputs": {
+          "content": "@base64ToString(triggerBody()?['contentData'])",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "CustomerName": { "type": "string" },
+              "CustomerEmail": { "type": "string" },
+              "ProductCode": { "type": "string" },
+              "Quantity": { "type": "integer" },
+              "UnitPrice": { "type": "number" },
+              "OrderDate": { "type": "string" }
+            },
+            "required": [ "CustomerName", "CustomerEmail", "ProductCode", "Quantity", "UnitPrice", "OrderDate" ]
+          }
+        }
+      },
+      "Transform_to_internal_format": {
+        "runAfter": {
+          "Parse_inbound_message": [ "Succeeded" ]
+        },
+        "type": "Liquid",
+        "kind": "JsonToJson",
+        "inputs": {
+          "body": "@body('Parse_inbound_message')",
+          "map": {
+            "source": "LogicApp",
+            "name": "ExternalToInternal"
+          }
+        }
+      },
+      "Send_to_orders-internal": {
+        "runAfter": {
+          "Transform_to_internal_format": [ "Succeeded" ]
+        },
+        "type": "ServiceProvider",
+        "inputs": {
+          "parameters": {
+            "entityName": "orders-internal",
+            "message": {
+              "contentData": "@{body('Transform_to_internal_format')}",
+              "contentType": "application/json"
+            }
+          },
+          "serviceProviderConfiguration": {
+            "connectionName": "serviceBus",
+            "operationId": "sendMessage",
+            "serviceProviderId": "/serviceProviders/serviceBus"
+          }
+        }
+      }
+    },
+    "outputs": {}
+  },
+  "kind": "Stateful"
+}

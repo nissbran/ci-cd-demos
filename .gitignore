@@ -1,0 +1,27 @@
+# Tools
+.idea
+*.suo
+*.user
+*.sln.docstates
+*.sln.ide/
+*.userprefs
+*.GhostDoc.xml
+*.bicepparam
+.vs
+.dapr
+
+# .NET
+[Bb]in/
+[Oo]bj/
+[Pp]ackages/
+
+# Intellj
+.idea
+
+# Config files
+.env
+appsettings.local.json
+*.bicepparam
+
+# Publish
+publish/

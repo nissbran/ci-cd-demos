@@ -1,0 +1,14 @@
+{
+  "managedApiConnections": {},
+  "serviceProviderConnections": {
+    "serviceBus": {
+      "parameterValues": {
+        "fullyQualifiedNamespace": "@appsetting('ServiceBusConnection__fullyQualifiedNamespace')"
+      },
+      "serviceProvider": {
+        "id": "/serviceProviders/serviceBus"
+      },
+      "displayName": "Service Bus"
+    }
+  }
+}

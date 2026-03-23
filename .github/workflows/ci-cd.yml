@@ -1,0 +1,153 @@
+name: CI/CD — Functions & Logic App
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  FUNCTION_APP_NAME_TEST: cicd-demo-func-test
+  FUNCTION_APP_NAME_STAGING: cicd-demo-func-staging
+  FUNCTION_APP_NAME_PROD: cicd-demo-func-prod
+  LOGIC_APP_NAME_TEST: cicd-demo-la-test
+  LOGIC_APP_NAME_STAGING: cicd-demo-la-staging
+  LOGIC_APP_NAME_PROD: cicd-demo-la-prod
+  DOTNET_VERSION: '8.0.x'
+
+jobs:
+  # ─────────────────────────────────────────
+  # CI — Build both components in parallel
+  # ─────────────────────────────────────────
+  build-functions:
+    name: Build — Azure Functions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore & build
+        run: |
+          dotnet restore src/functions/DemoFunctionApp/DemoFunctionApp.csproj
+          dotnet publish src/functions/DemoFunctionApp/DemoFunctionApp.csproj \
+            --configuration Release \
+            --output ./publish/functions
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: functions-artifact
+          path: ./publish/functions
+          retention-days: 7
+
+  build-logic-app:
+    name: Build — Logic App
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: logic-app-artifact
+          path: src/logic-apps/DemoLogicApp
+          retention-days: 7
+
+  # ─────────────────────────────────────────
+  # Deploy to Test (no approval gate)
+  # ─────────────────────────────────────────
+  deploy-test-functions:
+    name: Deploy Functions → test
+    needs: [build-functions, build-logic-app]
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/reusable-deploy-functions.yml
+    with:
+      environment: test
+      function-app-name: ${{ vars.FUNCTION_APP_NAME_TEST || 'cicd-demo-func-test' }}
+      artifact-name: functions-artifact
+      resource-group: rg-cicd-demo-test
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+  deploy-test-logic-app:
+    name: Deploy Logic App → test
+    needs: [build-functions, build-logic-app]
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/reusable-deploy-logic-app.yml
+    with:
+      environment: test
+      logic-app-name: ${{ vars.LOGIC_APP_NAME_TEST || 'cicd-demo-la-test' }}
+      artifact-name: logic-app-artifact
+      resource-group: rg-cicd-demo-test
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+  # ─────────────────────────────────────────
+  # Deploy to Staging (approval required)
+  # ─────────────────────────────────────────
+  deploy-staging-functions:
+    name: Deploy Functions → staging
+    needs: [deploy-test-functions, deploy-test-logic-app]
+    uses: ./.github/workflows/reusable-deploy-functions.yml
+    with:
+      environment: staging
+      function-app-name: ${{ vars.FUNCTION_APP_NAME_STAGING || 'cicd-demo-func-staging' }}
+      artifact-name: functions-artifact
+      resource-group: rg-cicd-demo-staging
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+  deploy-staging-logic-app:
+    name: Deploy Logic App → staging
+    needs: [deploy-test-functions, deploy-test-logic-app]
+    uses: ./.github/workflows/reusable-deploy-logic-app.yml
+    with:
+      environment: staging
+      logic-app-name: ${{ vars.LOGIC_APP_NAME_STAGING || 'cicd-demo-la-staging' }}
+      artifact-name: logic-app-artifact
+      resource-group: rg-cicd-demo-staging
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+  # ─────────────────────────────────────────
+  # Deploy to Prod (approval required)
+  # ─────────────────────────────────────────
+  deploy-prod-functions:
+    name: Deploy Functions → prod
+    needs: [deploy-staging-functions, deploy-staging-logic-app]
+    uses: ./.github/workflows/reusable-deploy-functions.yml
+    with:
+      environment: prod
+      function-app-name: ${{ vars.FUNCTION_APP_NAME_PROD || 'cicd-demo-func-prod' }}
+      artifact-name: functions-artifact
+      resource-group: rg-cicd-demo-prod
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+  deploy-prod-logic-app:
+    name: Deploy Logic App → prod
+    needs: [deploy-staging-functions, deploy-staging-logic-app]
+    uses: ./.github/workflows/reusable-deploy-logic-app.yml
+    with:
+      environment: prod
+      logic-app-name: ${{ vars.LOGIC_APP_NAME_PROD || 'cicd-demo-la-prod' }}
+      artifact-name: logic-app-artifact
+      resource-group: rg-cicd-demo-prod
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
