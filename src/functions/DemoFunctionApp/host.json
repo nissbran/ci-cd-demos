@@ -1,6 +1,13 @@
 {
   "version": "2.0",
+  "telemetryMode": "OpenTelemetry",
   "logging": {
+    "logLevel": {
+      "Microsoft.Agents.AI.DurableTask": "Information",
+      "Microsoft.Agents.AI.Hosting.AzureFunctions": "Information",
+      "DurableTask.AzureStorage": "Warning",
+      "DurableTask.Core": "Warning"
+    },
     "applicationInsights": {
       "samplingSettings": {
         "isEnabled": true,
@@ -10,7 +17,11 @@
   },
   "extensions": {
     "durableTask": {
-      "hubName": "DemoFunctionHub"
+      "hubName": "DemoFunctionHub",
+      "tracing": {
+        "distributedTracingEnabled": true,
+        "version": "V2"
+      }
     }
   }
 }

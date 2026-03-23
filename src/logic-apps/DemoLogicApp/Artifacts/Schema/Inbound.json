@@ -1,0 +1,31 @@
+{
+    "type": "object",
+    "properties": {
+        "CustomerName": {
+            "type": "string"
+        },
+        "CustomerEmail": {
+            "type": "string"
+        },
+        "ProductCode": {
+            "type": "string"
+        },
+        "Quantity": {
+            "type": "integer"
+        },
+        "UnitPrice": {
+            "type": "number"
+        },
+        "OrderDate": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "CustomerName",
+        "CustomerEmail",
+        "ProductCode",
+        "Quantity",
+        "UnitPrice",
+        "OrderDate"
+    ]
+}

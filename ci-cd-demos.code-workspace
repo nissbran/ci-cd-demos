@@ -1,0 +1,16 @@
+{
+  "folders": [
+    {
+      "name": "DemoLogicApp",
+      "path": "./src/logic-apps/DemoLogicApp"
+    },
+    {
+      "name": "Functions",
+      "path": "./src/functions/"
+    },
+    {
+      "name": "Tests",
+      "path": "src/logic-apps/Tests"
+    }
+  ]
+}

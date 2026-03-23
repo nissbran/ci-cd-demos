@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/functions/">
+    <Project Path="src/functions/DemoFunctionApp/DemoFunctionApp.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+	<Project Path="src/logic-apps/Tests/DemoLogicApp/DemoLogicApp.csproj" />
+  </Folder>
+</Solution>
