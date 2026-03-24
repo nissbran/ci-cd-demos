@@ -12,7 +12,7 @@ public class OrderEnrichmentStarter(ILogger<OrderEnrichmentStarter> logger)
 {
     [Function(nameof(OrderEnrichmentStarter))]
     public async Task Run(
-        [ServiceBusTrigger("orders-internal", "func-internal", Connection = "ServiceBusConnection")]
+        [ServiceBusTrigger("orders-internal", "func-internal", Connection = "OrdersServiceBus")]
         string messageBody,
         [DurableClient] DurableTaskClient durableClient)
     {

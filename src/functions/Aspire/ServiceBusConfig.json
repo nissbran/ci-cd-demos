@@ -5,7 +5,7 @@
         "Name": "messaging",
         "Topics": [
           {
-            "Name": "inbound",
+            "Name": "orders-enriched",
             "Properties": {
               "DefaultMessageTimeToLive": "PT1H",
               "DuplicateDetectionHistoryTimeWindow": "PT20S",

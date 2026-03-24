@@ -139,7 +139,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
       AzureWebJobsStorage__credential: 'managedidentity'
       APPLICATIONINSIGHTS_CONNECTION_STRING: appInsightsConnectionString
       // Identity-based Service Bus connection - triggers and outputs use managed identity
-      ServiceBusConnection__fullyQualifiedNamespace: serviceBusNamespaceFqdn
+      OrdersServiceBus__fullyQualifiedNamespace: serviceBusNamespaceFqdn
       // SQL connection using the user-assigned managed identity
       SqlConnectionString: sqlConnectionString
     }

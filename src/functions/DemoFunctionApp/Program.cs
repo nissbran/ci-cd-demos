@@ -7,8 +7,8 @@ var host = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
     .ConfigureServices((context, services) =>
     {
-        var fqdn = context.Configuration["ServiceBusConnection__fullyQualifiedNamespace"];
-        var connectionString = context.Configuration["ServiceBusConnection"];
+        var fqdn = context.Configuration["OrdersServiceBus__fullyQualifiedNamespace"];
+        var connectionString = context.Configuration["OrdersServiceBus"];
 
         // Managed identity (Azure): uses fullyQualifiedNamespace + DefaultAzureCredential
         // Local dev: uses connection string (injected by Aspire emulator or set in local.settings.json)
@@ -16,7 +16,7 @@ var host = new HostBuilder()
             ? new ServiceBusClient(fqdn, new DefaultAzureCredential())
             : new ServiceBusClient(connectionString
                 ?? throw new InvalidOperationException(
-                    "Either ServiceBusConnection__fullyQualifiedNamespace (managed identity) or ServiceBusConnection (connection string) must be configured."));
+                    "Either OrdersServiceBus_fullyQualifiedNamespace (managed identity) or OrdersServiceBus (connection string) must be configured."));
 
         services.AddSingleton(serviceBusClient);
     })

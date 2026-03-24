@@ -12,7 +12,7 @@ var sql = builder.AddAzureSqlServer("sql")
 
 var auditDb = sql.AddDatabase("audit-db");
 
-var serviceBus = builder.AddAzureServiceBus("messaging")
+var serviceBus = builder.AddAzureServiceBus("OrdersServiceBus")
     .RunAsEmulator(emulator =>
     {
         emulator.WithConfigurationFile(
@@ -25,6 +25,7 @@ var agent = builder.AddAzureFunctionsProject<Projects.DemoFunctionApp>("DemoFunc
     .WithReference(auditDb)
     .WithReference(serviceBus)
     .WaitFor(storage)
+    .WaitFor(serviceBus)
     .WithExternalHttpEndpoints();
 
 builder.Build().Run();

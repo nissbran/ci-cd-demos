@@ -123,7 +123,7 @@ resource logicApp 'Microsoft.Web/sites@2023-01-01' = {
         }
         // Identity-based Service Bus connection — workflows use managed identity
         {
-          name: 'ServiceBusConnection__fullyQualifiedNamespace'
+          name: 'OrdersServiceBus__fullyQualifiedNamespace'
           value: serviceBusNamespaceFqdn
         }
       ]

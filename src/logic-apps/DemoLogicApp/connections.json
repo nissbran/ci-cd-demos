@@ -3,7 +3,7 @@
   "serviceProviderConnections": {
     "serviceBus": {
       "parameterValues": {
-        "fullyQualifiedNamespace": "@appsetting('ServiceBusConnection__fullyQualifiedNamespace')"
+        "fullyQualifiedNamespace": "@appsetting('OrdersServiceBus__fullyQualifiedNamespace')"
       },
       "serviceProvider": {
         "id": "/serviceProviders/serviceBus"
