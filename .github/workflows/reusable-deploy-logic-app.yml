@@ -42,12 +42,19 @@ jobs:
         with:
           app-name: ${{ inputs.logic-app-name }}
           package: ./artifact
-          slot-name: staging
 
-      - name: Swap staging → production
-        run: |
-          az webapp deployment slot swap \
-            --name "${{ inputs.logic-app-name }}" \
-            --resource-group "${{ inputs.resource-group }}" \
-            --slot staging \
-            --target-slot production
+      # - name: "Deploy LogicApp with Functions Action"
+      #   uses: Azure/functions-action@v1
+      #   id: la
+      #   with:
+      #     app-name: ${{ inputs.logic-app-name }}
+      #     package: ./artifact
+      #     slot-name: staging
+
+      # - name: Swap staging → production
+      #   run: |
+      #     az webapp deployment slot swap \
+      #       --name "${{ inputs.logic-app-name }}" \
+      #       --resource-group "${{ inputs.resource-group }}" \
+      #       --slot staging \
+      #       --target-slot production
