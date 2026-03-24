@@ -15,6 +15,10 @@ env:
   LOGIC_APP_NAME_PROD: cicd-demo-la-prod
   DOTNET_VERSION: "10.0.x"
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   # ─────────────────────────────────────────
   # CI — Build both components in parallel
