@@ -70,6 +70,7 @@ jobs:
       function-app-name: ${{ vars.FUNCTION_APP_NAME_TEST || 'cicd-demo-func-test' }}
       artifact-name: functions-artifact
       resource-group: rg-cicd-demo-test
+    secrets: inherit
 
   deploy-test-logic-app:
     name: Deploy Logic App → test
@@ -81,6 +82,7 @@ jobs:
       logic-app-name: ${{ vars.LOGIC_APP_NAME_TEST || 'cicd-demo-la-test' }}
       artifact-name: logic-app-artifact
       resource-group: rg-cicd-demo-test
+    secrets: inherit
 
   # ─────────────────────────────────────────
   # Deploy to Staging (approval required)
