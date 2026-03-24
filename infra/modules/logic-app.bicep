@@ -106,6 +106,10 @@ resource logicApp 'Microsoft.Web/sites@2023-01-01' = {
           value: '1'
         }
         {
+          name: 'WEBSITE_RUN_FROM_PACKAGE'
+          value: '1'
+        }
+        {
           name: 'FUNCTIONS_EXTENSION_VERSION'
           value: '~4'
         }
@@ -367,6 +371,10 @@ resource logicAppStagingSlot 'Microsoft.Web/sites/slots@2023-01-01' = {
           value: 'node'
         }
         {
+          name: 'WEBSITE_RUN_FROM_PACKAGE'
+          value: '1'
+        }
+        {
           name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
           value: appInsightsConnectionString
         }
@@ -375,7 +383,7 @@ resource logicAppStagingSlot 'Microsoft.Web/sites/slots@2023-01-01' = {
           value: 'workflowApp'
         }
         {
-          name: 'ServiceBusConnection__fullyQualifiedNamespace'
+          name: 'OrdersServiceBus__fullyQualifiedNamespace'
           value: serviceBusNamespaceFqdn
         }
       ]
