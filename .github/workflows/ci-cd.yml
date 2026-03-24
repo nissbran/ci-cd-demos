@@ -47,6 +47,7 @@ jobs:
           name: functions-artifact
           path: ./publish/functions
           retention-days: 7
+          include-hidden-files: true
 
   build-logic-app:
     name: Build — Logic App
