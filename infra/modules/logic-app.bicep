@@ -31,10 +31,12 @@ param tableDnsZoneId string
 @description('Private DNS zone resource ID for privatelink.file.core.windows.net')
 param fileDnsZoneId string
 
+@description('Application Insights connection string')
+param appInsightsConnectionString string
+
 var logicAppName = '${baseName}-la-${environment}'
 var storageAccountName = toLower(replace('${baseName}last${environment}', '-', ''))
 var appServicePlanName = '${baseName}-asp-la-${environment}'
-var appInsightsName = '${baseName}-ai-la-${environment}'
 var contentShareName = 'la-content'
 
 // Built-in RBAC role definition IDs
@@ -61,15 +63,6 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
 resource fileShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2023-01-01' = {
   name: '${storageAccount.name}/default/${contentShareName}'
   properties: {}
-}
-
-resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: appInsightsName
-  location: location
-  kind: 'web'
-  properties: {
-    Application_Type: 'web'
-  }
 }
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
@@ -121,8 +114,8 @@ resource logicApp 'Microsoft.Web/sites@2023-01-01' = {
           value: 'node'
         }
         {
-          name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
-          value: appInsights.properties.InstrumentationKey
+          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+          value: appInsightsConnectionString
         }
         {
           name: 'APP_KIND'
@@ -281,7 +274,10 @@ resource laStorageQueueContributor 'Microsoft.Authorization/roleAssignments@2022
   name: guid(storageAccount.id, logicApp.id, storageQueueDataContributorRoleId)
   scope: storageAccount
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageQueueDataContributorRoleId)
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      storageQueueDataContributorRoleId
+    )
     principalId: logicApp.identity.principalId
     principalType: 'ServicePrincipal'
   }
@@ -291,7 +287,10 @@ resource laStorageTableContributor 'Microsoft.Authorization/roleAssignments@2022
   name: guid(storageAccount.id, logicApp.id, storageTableDataContributorRoleId)
   scope: storageAccount
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageTableDataContributorRoleId)
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      storageTableDataContributorRoleId
+    )
     principalId: logicApp.identity.principalId
     principalType: 'ServicePrincipal'
   }
@@ -368,8 +367,8 @@ resource logicAppStagingSlot 'Microsoft.Web/sites/slots@2023-01-01' = {
           value: 'node'
         }
         {
-          name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
-          value: appInsights.properties.InstrumentationKey
+          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+          value: appInsightsConnectionString
         }
         {
           name: 'APP_KIND'
@@ -402,7 +401,10 @@ resource laSlotStorageQueueContributor 'Microsoft.Authorization/roleAssignments@
   name: guid(storageAccount.id, logicAppStagingSlot.id, storageQueueDataContributorRoleId)
   scope: storageAccount
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageQueueDataContributorRoleId)
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      storageQueueDataContributorRoleId
+    )
     principalId: logicAppStagingSlot.identity.principalId
     principalType: 'ServicePrincipal'
   }
@@ -412,7 +414,10 @@ resource laSlotStorageTableContributor 'Microsoft.Authorization/roleAssignments@
   name: guid(storageAccount.id, logicAppStagingSlot.id, storageTableDataContributorRoleId)
   scope: storageAccount
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageTableDataContributorRoleId)
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      storageTableDataContributorRoleId
+    )
     principalId: logicAppStagingSlot.identity.principalId
     principalType: 'ServicePrincipal'
   }

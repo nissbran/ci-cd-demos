@@ -17,6 +17,15 @@ module networking 'modules/networking.bicep' = {
   }
 }
 
+module observability 'modules/observability.bicep' = {
+  name: 'observability'
+  params: {
+    location: location
+    environment: environment
+    baseName: baseName
+  }
+}
+
 module serviceBus 'modules/service-bus.bicep' = {
   name: 'service-bus'
   params: {
@@ -56,6 +65,7 @@ module functionApp 'modules/function-app.bicep' = {
     sqlDatabaseName: sql.outputs.sqlDatabaseName
     sqlUaiId: sql.outputs.sqlUaiId
     sqlUaiClientId: sql.outputs.sqlUaiClientId
+    appInsightsConnectionString: observability.outputs.appInsightsConnectionString
   }
 }
 
@@ -73,6 +83,7 @@ module logicApp 'modules/logic-app.bicep' = {
     queueDnsZoneId: networking.outputs.queueDnsZoneId
     tableDnsZoneId: networking.outputs.tableDnsZoneId
     fileDnsZoneId: networking.outputs.fileDnsZoneId
+    appInsightsConnectionString: observability.outputs.appInsightsConnectionString
   }
 }
 

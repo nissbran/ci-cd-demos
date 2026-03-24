@@ -40,10 +40,12 @@ param sqlUaiId string
 @description('Client ID of the user-assigned managed identity used for SQL authentication')
 param sqlUaiClientId string
 
+@description('Application Insights connection string')
+param appInsightsConnectionString string
+
 var functionAppName = '${baseName}-func-${environment}'
 var storageAccountName = toLower(replace('${baseName}st${environment}', '-', ''))
 var appServicePlanName = '${baseName}-asp-func-${environment}'
-var appInsightsName = '${baseName}-ai-func-${environment}'
 var deploymentContainerName = 'func-deployment-pkg'
 var sqlConnectionString = 'Server=${sqlServerFqdn};Database=${sqlDatabaseName};Authentication=Active Directory Managed Identity;User Id=${sqlUaiClientId};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'
 
@@ -74,15 +76,6 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
 resource deploymentContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-01-01' = {
   name: '${storageAccount.name}/default/${deploymentContainerName}'
   properties: {}
-}
-
-resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: appInsightsName
-  location: location
-  kind: 'web'
-  properties: {
-    Application_Type: 'web'
-  }
 }
 
 // FC1 (Flex Consumption) - Linux-based, pay-per-use, supports VNet integration natively
@@ -144,7 +137,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
       // Identity-based storage connection - no account key required
       AzureWebJobsStorage__accountName: storageAccount.name
       AzureWebJobsStorage__credential: 'managedidentity'
-      APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.properties.ConnectionString
+      APPLICATIONINSIGHTS_CONNECTION_STRING: appInsightsConnectionString
       // Identity-based Service Bus connection - triggers and outputs use managed identity
       ServiceBusConnection__fullyQualifiedNamespace: serviceBusNamespaceFqdn
       // SQL connection using the user-assigned managed identity
@@ -161,119 +154,6 @@ resource funcNetworkConfig 'Microsoft.Web/sites/networkConfig@2024-04-01' = {
     subnetResourceId: funcIntegrationSubnetId
   }
 }
-
-// Staging deployment slot — code is deployed here first, then swapped to production
-resource functionAppStagingSlot 'Microsoft.Web/sites/slots@2024-04-01' = {
-  parent: functionApp
-  name: 'staging'
-  location: location
-  kind: 'functionapp,linux'
-  identity: {
-    type: 'SystemAssigned, UserAssigned'
-    userAssignedIdentities: {
-      '${sqlUaiId}': {}
-    }
-  }
-  properties: {
-    serverFarmId: appServicePlan.id
-    httpsOnly: true
-    siteConfig: {
-      minTlsVersion: '1.2'
-    }
-    functionAppConfig: {
-      deployment: {
-        storage: {
-          type: 'blobContainer'
-          value: '${storageAccount.properties.primaryEndpoints.blob}${deploymentContainerName}'
-          authentication: {
-            type: 'SystemAssignedIdentity'
-          }
-        }
-      }
-      scaleAndConcurrency: {
-        maximumInstanceCount: 100
-        instanceMemoryMB: 2048
-      }
-      runtime: {
-        name: 'dotnet-isolated'
-        version: '10.0'
-      }
-    }
-  }
-
-  resource appSettings 'config' = {
-    name: 'appsettings'
-    properties: {
-      AzureWebJobsStorage__accountName: storageAccount.name
-      AzureWebJobsStorage__credential: 'managedidentity'
-      APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.properties.ConnectionString
-      ServiceBusConnection__fullyQualifiedNamespace: serviceBusNamespaceFqdn
-      SqlConnectionString: sqlConnectionString
-    }
-  }
-}
-
-resource funcStagingSlotNetworkConfig 'Microsoft.Web/sites/slots/networkConfig@2024-04-01' = {
-  parent: functionAppStagingSlot
-  name: 'virtualNetwork'
-  properties: {
-    subnetResourceId: funcIntegrationSubnetId
-  }
-}
-
-// RBAC: grant the staging slot's managed identity access to storage and Service Bus
-// (identity stays with the slot after swap, so both slot and production need their own roles)
-
-resource funcSlotStorageBlobOwner 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(storageAccount.id, functionAppStagingSlot.id, storageBlobDataOwnerRoleId)
-  scope: storageAccount
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataOwnerRoleId)
-    principalId: functionAppStagingSlot.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-resource funcSlotStorageQueueContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(storageAccount.id, functionAppStagingSlot.id, storageQueueDataContributorRoleId)
-  scope: storageAccount
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageQueueDataContributorRoleId)
-    principalId: functionAppStagingSlot.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-resource funcSlotStorageTableContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(storageAccount.id, functionAppStagingSlot.id, storageTableDataContributorRoleId)
-  scope: storageAccount
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageTableDataContributorRoleId)
-    principalId: functionAppStagingSlot.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-resource funcSlotServiceBusSender 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(serviceBusNamespaceRef.id, functionAppStagingSlot.id, serviceBusDataSenderRoleId)
-  scope: serviceBusNamespaceRef
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', serviceBusDataSenderRoleId)
-    principalId: functionAppStagingSlot.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-resource funcSlotServiceBusReceiver 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(serviceBusNamespaceRef.id, functionAppStagingSlot.id, serviceBusDataReceiverRoleId)
-  scope: serviceBusNamespaceRef
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', serviceBusDataReceiverRoleId)
-    principalId: functionAppStagingSlot.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
 
 resource storageBlobPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-09-01' = {
   name: '${storageAccountName}-blob-pe'
@@ -385,7 +265,10 @@ resource funcStorageQueueContributor 'Microsoft.Authorization/roleAssignments@20
   name: guid(storageAccount.id, functionApp.id, storageQueueDataContributorRoleId)
   scope: storageAccount
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageQueueDataContributorRoleId)
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      storageQueueDataContributorRoleId
+    )
     principalId: functionApp.identity.principalId
     principalType: 'ServicePrincipal'
   }
@@ -395,7 +278,10 @@ resource funcStorageTableContributor 'Microsoft.Authorization/roleAssignments@20
   name: guid(storageAccount.id, functionApp.id, storageTableDataContributorRoleId)
   scope: storageAccount
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageTableDataContributorRoleId)
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      storageTableDataContributorRoleId
+    )
     principalId: functionApp.identity.principalId
     principalType: 'ServicePrincipal'
   }

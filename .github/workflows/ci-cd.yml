@@ -13,7 +13,7 @@ env:
   LOGIC_APP_NAME_TEST: cicd-demo-la-test
   LOGIC_APP_NAME_STAGING: cicd-demo-la-staging
   LOGIC_APP_NAME_PROD: cicd-demo-la-prod
-  DOTNET_VERSION: '8.0.x'
+  DOTNET_VERSION: "8.0.x"
 
 jobs:
   # ─────────────────────────────────────────

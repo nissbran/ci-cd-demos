@@ -11,6 +11,14 @@
                 "-y",
                 "Azure.Bicep.McpServer"
             ]
+        },
+        "aspire": {
+            "type": "stdio",
+            "command": "aspire",
+            "args": [
+                "mcp",
+                "start"
+            ]
         }
     },
     "inputs": []

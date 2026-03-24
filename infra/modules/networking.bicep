@@ -23,9 +23,9 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
           addressPrefix: '10.0.1.0/26'
           delegations: [
             {
-              name: 'Microsoft.Web.serverFarms'
+              name: 'Microsoft.App.environments'
               properties: {
-                serviceName: 'Microsoft.Web/serverFarms'
+                serviceName: 'Microsoft.App/environments'
               }
             }
           ]
