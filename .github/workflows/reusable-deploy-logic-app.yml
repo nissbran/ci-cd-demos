@@ -36,17 +36,13 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploy Logic App to staging slot
-        run: |
-          cd ./artifact
-          zip -r ../logic-app.zip .
-          cd ..
-          az logicapp deployment source config-zip \
-            --name "${{ inputs.logic-app-name }}" \
-            --resource-group "${{ inputs.resource-group }}" \
-            --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
-            --slot staging \
-            --src logic-app.zip
+      - name: "Deploy LogicApp with Functions Action"
+        uses: Azure/functions-action@v1
+        id: la
+        with:
+          app-name: ${{ inputs.logic-app-name }}
+          package: ./artifact
+          slot-name: staging
 
       - name: Swap staging → production
         run: |
