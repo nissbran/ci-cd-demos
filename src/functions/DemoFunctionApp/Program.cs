@@ -7,7 +7,7 @@ var host = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
     .ConfigureServices((context, services) =>
     {
-        var fqdn = context.Configuration["OrdersServiceBus__fullyQualifiedNamespace"];
+        var fqdn = context.Configuration["OrdersServiceBus:fullyQualifiedNamespace"];
         var connectionString = context.Configuration["OrdersServiceBus"];
 
         // Managed identity (Azure): uses fullyQualifiedNamespace + DefaultAzureCredential
@@ -16,7 +16,7 @@ var host = new HostBuilder()
             ? new ServiceBusClient(fqdn, new DefaultAzureCredential())
             : new ServiceBusClient(connectionString
                 ?? throw new InvalidOperationException(
-                    "Either OrdersServiceBus_fullyQualifiedNamespace (managed identity) or OrdersServiceBus (connection string) must be configured."));
+                    "Either OrdersServiceBus__fullyQualifiedNamespace (managed identity) or OrdersServiceBus (connection string) must be configured."));
 
         services.AddSingleton(serviceBusClient);
     })
