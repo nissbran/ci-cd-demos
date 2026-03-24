@@ -13,7 +13,7 @@ env:
   LOGIC_APP_NAME_TEST: cicd-demo-la-test
   LOGIC_APP_NAME_STAGING: cicd-demo-la-staging
   LOGIC_APP_NAME_PROD: cicd-demo-la-prod
-  DOTNET_VERSION: "8.0.x"
+  DOTNET_VERSION: "10.0.x"
 
 jobs:
   # ─────────────────────────────────────────
@@ -70,10 +70,6 @@ jobs:
       function-app-name: ${{ vars.FUNCTION_APP_NAME_TEST || 'cicd-demo-func-test' }}
       artifact-name: functions-artifact
       resource-group: rg-cicd-demo-test
-    secrets:
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   deploy-test-logic-app:
     name: Deploy Logic App → test
@@ -85,10 +81,6 @@ jobs:
       logic-app-name: ${{ vars.LOGIC_APP_NAME_TEST || 'cicd-demo-la-test' }}
       artifact-name: logic-app-artifact
       resource-group: rg-cicd-demo-test
-    secrets:
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   # ─────────────────────────────────────────
   # Deploy to Staging (approval required)
@@ -102,10 +94,6 @@ jobs:
       function-app-name: ${{ vars.FUNCTION_APP_NAME_STAGING || 'cicd-demo-func-staging' }}
       artifact-name: functions-artifact
       resource-group: rg-cicd-demo-staging
-    secrets:
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   deploy-staging-logic-app:
     name: Deploy Logic App → staging
@@ -116,10 +104,6 @@ jobs:
       logic-app-name: ${{ vars.LOGIC_APP_NAME_STAGING || 'cicd-demo-la-staging' }}
       artifact-name: logic-app-artifact
       resource-group: rg-cicd-demo-staging
-    secrets:
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   # ─────────────────────────────────────────
   # Deploy to Prod (approval required)
@@ -133,10 +117,6 @@ jobs:
       function-app-name: ${{ vars.FUNCTION_APP_NAME_PROD || 'cicd-demo-func-prod' }}
       artifact-name: functions-artifact
       resource-group: rg-cicd-demo-prod
-    secrets:
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   deploy-prod-logic-app:
     name: Deploy Logic App → prod
@@ -147,7 +127,3 @@ jobs:
       logic-app-name: ${{ vars.LOGIC_APP_NAME_PROD || 'cicd-demo-la-prod' }}
       artifact-name: logic-app-artifact
       resource-group: rg-cicd-demo-prod
-    secrets:
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
