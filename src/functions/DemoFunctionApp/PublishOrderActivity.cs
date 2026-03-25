@@ -2,22 +2,27 @@ using Azure.Messaging.ServiceBus;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace DemoFunctionApp;
 
 /// <summary>
-/// Activity 3 — Publishes the enriched order to the orders-enriched Service Bus topic
-/// using the shared <see cref="ServiceBusClient"/> registered in DI.
+/// Activity 3 — Serializes the <see cref="EnrichedOrder"/> and publishes it to the
+/// <c>orders-enriched</c> Service Bus topic using the shared <see cref="ServiceBusClient"/> from DI.
+/// The JSON payload matches the input contract of <c>InternalToExternal.liquid</c>.
 /// </summary>
 public class PublishOrderActivity(ServiceBusClient serviceBusClient, ILogger<PublishOrderActivity> logger)
 {
     [Function(nameof(PublishOrderActivity))]
-    public async Task Run([ActivityTrigger] string enrichedMessage, TaskActivityContext context)
+    public async Task Run([ActivityTrigger] EnrichedOrder enrichedOrder, TaskActivityContext context)
     {
-        logger.LogInformation("PublishOrderActivity: sending message to orders-enriched");
+        logger.LogInformation(
+            "PublishOrderActivity: sending order {OrderId} to orders-enriched", enrichedOrder.OrderId);
+
+        var json = JsonSerializer.Serialize(enrichedOrder);
 
         await using var sender = serviceBusClient.CreateSender("orders-enriched");
-        await sender.SendMessageAsync(new ServiceBusMessage(enrichedMessage)
+        await sender.SendMessageAsync(new ServiceBusMessage(json)
         {
             ContentType = "application/json",
             ApplicationProperties =
@@ -26,6 +31,7 @@ public class PublishOrderActivity(ServiceBusClient serviceBusClient, ILogger<Pub
             },
         });
 
-        logger.LogInformation("PublishOrderActivity: message sent to orders-enriched");
+        logger.LogInformation(
+            "PublishOrderActivity: order {OrderId} sent to orders-enriched", enrichedOrder.OrderId);
     }
 }

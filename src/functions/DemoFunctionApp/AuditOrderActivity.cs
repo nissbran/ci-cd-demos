@@ -3,6 +3,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.DurableTask;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace DemoFunctionApp;
 
@@ -23,6 +24,8 @@ public class AuditOrderActivity(IConfiguration configuration, ILogger<AuditOrder
             "AuditOrderActivity: writing audit record for order {OrderId} (instance {InstanceId})",
             input.OrderId, input.InstanceId);
 
+        var messageJson = JsonSerializer.Serialize(input.EnrichedOrder);
+
         await using var conn = new SqlConnection(_connectionString);
         await conn.OpenAsync();
 
@@ -36,7 +39,7 @@ public class AuditOrderActivity(IConfiguration configuration, ILogger<AuditOrder
         await using var cmd = new SqlCommand(insertSql, conn);
         cmd.Parameters.AddWithValue("@OrderId", input.OrderId);
         cmd.Parameters.AddWithValue("@InstanceId", input.InstanceId);
-        cmd.Parameters.AddWithValue("@MessageJson", input.EnrichedMessageJson);
+        cmd.Parameters.AddWithValue("@MessageJson", messageJson);
         await cmd.ExecuteNonQueryAsync();
 
         logger.LogInformation(

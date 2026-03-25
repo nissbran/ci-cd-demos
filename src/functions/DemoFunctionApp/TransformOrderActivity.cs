@@ -1,32 +1,41 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 
 namespace DemoFunctionApp;
 
 /// <summary>
-/// Activity 1 — Enriches the raw internal-format order with processing metadata.
+/// Activity 1 — Enriches the internal-format order with processing metadata.
+/// Accepts <see cref="InternalOrder"/> and returns an <see cref="EnrichedOrder"/>.
 /// </summary>
 public class TransformOrderActivity(ILogger<TransformOrderActivity> logger)
 {
     [Function(nameof(TransformOrderActivity))]
-    public string Run([ActivityTrigger] string messageBody, TaskActivityContext context)
+    public EnrichedOrder Run([ActivityTrigger] InternalOrder order, TaskActivityContext context)
     {
-        logger.LogInformation("TransformOrderActivity: enriching message");
+        if (order is null
+            || string.IsNullOrWhiteSpace(order.OrderId)
+            || order.Customer is null
+            || order.LineItem is null)
+        {
+            throw new ArgumentException(
+                "TransformOrderActivity requires orderId, customer, and lineItem in the InternalOrder input.",
+                nameof(order));
+        }
 
-        var order = JsonNode.Parse(messageBody)!.AsObject();
-        var orderId = order["orderId"]?.GetValue<string>() ?? "unknown";
+        logger.LogInformation("TransformOrderActivity: enriching order {OrderId}", order.OrderId);
 
-        order["status"] = "processing";
-        order["processingNotes"] = "Order validated and queued for fulfilment by DemoFunctionApp";
-        order["processedAt"] = DateTime.UtcNow.ToString("o");
-        order["orchestrationInstanceId"] = context.InstanceId;
+        var enriched = new EnrichedOrder(
+            OrderId: order.OrderId,
+            CreatedAt: order.CreatedAt,
+            Customer: order.Customer,
+            LineItem: order.LineItem,
+            Status: "processing",
+            ProcessingNotes: "Order validated and queued for fulfilment by DemoFunctionApp",
+            ProcessedAt: DateTime.UtcNow.ToString("o"),
+            OrchestrationInstanceId: context.InstanceId);
 
-        var enriched = order.ToJsonString(new JsonSerializerOptions { WriteIndented = false });
-
-        logger.LogInformation("TransformOrderActivity: enriched order {OrderId}", orderId);
+        logger.LogInformation("TransformOrderActivity: enriched order {OrderId}", enriched.OrderId);
         return enriched;
     }
 }
